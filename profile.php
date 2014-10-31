@@ -69,7 +69,7 @@ define('MAIL_USERNAME', "");
 define('MEMCACHE_SERVERS', "");
 define('MIN_RESULTS_TO_GROUP', "200");
 define('NAME_SERVER', "http://localhost/yioop/");
-define('NEWS_MODE', "news_process");
+define('NEWS_MODE', "news_off");
 define('PROXY_SERVERS', "");
 define('REGISTRATION_TYPE', "disable_registration");
 define('ROBOT_INSTANCE', "localhost-1409618260");
