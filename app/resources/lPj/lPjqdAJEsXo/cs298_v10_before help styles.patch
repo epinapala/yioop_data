@@ -1,0 +1,1502 @@
+From b2e3836e469cc34855378470364c300ba1490a3c Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Thu, 23 Oct 2014 00:16:26 -0700
+Subject: [PATCH 1/5] - Initial changes for seamless DB upgrade/new creations.
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ configs/config.php         |  4 ++-
+ controllers/controller.php |  4 +--
+ lib/upgrade_functions.php  | 68 ++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 73 insertions(+), 3 deletions(-)
+
+diff --git a/configs/config.php b/configs/config.php
+index aec8feb..91a3e7a 100755
+--- a/configs/config.php
++++ b/configs/config.php
+@@ -37,7 +37,7 @@ if(!defined('BASE_DIR') ||
+ /** Version number for upgrade function
+  * @var int
+  */
+-define('YIOOP_VERSION', 24);
++define('YIOOP_VERSION', 25);
+ /*
+     pcre is an external library to php which can cause Yioop
+     to seg fault if given instances of reg expressions with
+@@ -272,6 +272,8 @@ define('USER_ROLE', 2);
+ define('PUBLIC_GROUP_ID', 2);
+ /** ID of the group to which all Yioop users belong */
+ define('PUBLIC_USER_ID', 2);
++/** ID of the group to which all Yioop Help Wiki articles belong */
++define('HELP_GROUP_ID', 3);
+ if(!PROFILE) {
+     return;
+ }
+diff --git a/controllers/controller.php b/controllers/controller.php
+index 271172d..9c73885 100755
+--- a/controllers/controller.php
++++ b/controllers/controller.php
+@@ -271,8 +271,8 @@ abstract class Controller
+         $data = array();
+         $data["OTHER_BACK_URL"] = "";
+         if(isset($_REQUEST['back_params'])) {
+-            foreach ($_REQUEST['back_params'] as
+-                     $back_param_key => $back_param_value) {
++            foreach($_REQUEST['back_params'] as
++                    $back_param_key => $back_param_value) {
+                 $data['BACK_PARAMS']["back_params[$back_param_key]"]
+                     = $back_param_value;
+                 $data["OTHER_BACK_URL"] .= "&amp;back_params[$back_param_key]"
+diff --git a/lib/upgrade_functions.php b/lib/upgrade_functions.php
+index 4c249f7..d12175d 100644
+--- a/lib/upgrade_functions.php
++++ b/lib/upgrade_functions.php
+@@ -856,6 +856,74 @@ function upgradeDatabaseVersion24(&$db)
+     }
+ }
+ /**
++ * Upgrades a Version 24 version of the Yioop! database to a Version 25 version
++ *
++ * @param object $db datasource to use to upgrade
++ */
++function upgradeDatabaseVersion25(&$db) {
++    /** For reading HELP_GROUP_ID**/
++    require_once BASE_DIR . "/configs/config.php";
++    /** For GroupModel::setPageName method */
++    require_once BASE_DIR . "/models/group_model.php";
++    $db->execute("DELETE FROM VERSION WHERE ID < 24");
++    $db->execute("UPDATE VERSION SET ID=25 WHERE ID=24");
++    $sql = "SELECT COUNT(*) AS NUM FROM GROUPS WHERE GROUP_ID=".HELP_GROUP_ID;
++    $result = $db->execute($sql);
++    $row = ($db->fetchArray($result));
++    $is_taken = intval($row['NUM']);
++    if ($is_taken > 0) {
++        //Get the max group Id , increment it to push the old group
++        $sql = "SELECT MAX(GROUP_ID) AS MAX_GROUP_ID FROM GROUPS";
++        $result = $db->execute($sql);
++        $row = $db->fetchArray($result);
++        $max_group_id = $row['MAX_GROUP_ID'] + 1;
++        $tables_to_update_group_id = array("GROUPS", "GROUP_ITEM", "GROUP_PAGE",
++            "GROUP_PAGE_HISTORY", "USER_GROUP");
++        foreach ($tables_to_update_group_id as $table) {
++            $sql = "UPDATE $table "
++                    . "Set GROUP_ID=$max_group_id "
++                    . "WHERE "
++                    . "GROUP_ID=". HELP_GROUP_ID;
++            $db->execute($sql);
++        }
++    }
++    //Insert the Help Group
++    $creation_time = microTimestamp();
++    $sql = "INSERT INTO GROUPS VALUES(" . HELP_GROUP_ID . ",'Help','" 
++            . $creation_time . "','" . ROOT_ID . "','" . PUBLIC_JOIN . "', '" 
++            . GROUP_READ . "', " . NON_VOTING_GROUP . ", " . FOREVER . ")";
++    $db->execute($sql);
++    $now = time();
++    $db->execute("INSERT INTO USER_GROUP VALUES (" . ROOT_ID . ", " .
++            HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
++    $db->execute("INSERT INTO USER_GROUP VALUES (" . PUBLIC_USER_ID . ", " .
++            HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
++    //Insert into Groups
++    $help_pages = array();
++    $help_pages = getWikiHelpPages();
++    foreach ($help_pages as $page_name => $page_content) {
++        $page_content = str_replace("&amp;", "&", $page_content);
++        $page_content = @htmlentities($page_content, ENT_QUOTES, "UTF-8");
++        $group_model = new GroupModel(DB_NAME, false);
++        $group_model->db = $db;
++        $group_model->setPageName(ROOT_ID, HELP_GROUP_ID, $page_name, 
++                $page_content, "en-US", "Creating Default Pages", "$page_name "
++                . "Help Page Created!", "Discuss the page in this thread!");
++    }
++}
++
++function getWikiHelpPages()
++{
++    $help_pages = array();
++    $help_pages["Help Page 1"] = <<<EOD
++title=Help Page One
++description=This is a test page for Wiki help insertion.
++END_HEAD_VARS
++==Please ignore this page.==
++EOD;
++    return $help_pages;
++}
++/**
+  * Used to insert a new activity into the database at a given acitivity_id
+  *
+  * Inserting at an ID rather than at the end is useful since activities are
+-- 
+1.9.3 (Apple Git-50)
+
+
+From 24214cce1171bc81290d181a19d7d1901e87dbee Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Thu, 23 Oct 2014 22:30:21 -0700
+Subject: [PATCH 2/5] - Create db working - Upgrade db works on up-reving the
+ version
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ configs/createdb.php                      |  48 ++++++++++++++++++++-
+ controllers/controller.php                |   4 +-
+ data/default.db                           | Bin 105472 -> 123904 bytes
+ lib/upgrade_functions.php                 |  68 +++++++++++++++++++-----------
+ views/elements/managelocales_element.php  |  11 +++--
+ views/elements/managemachines_element.php |  10 ++++-
+ views/helpers/helpbutton_helper.php       |   2 +-
+ views/helpers/searchform_helper.php       |   5 ++-
+ 8 files changed, 113 insertions(+), 35 deletions(-)
+
+diff --git a/configs/createdb.php b/configs/createdb.php
+index b917083..d0d87c6 100755
+--- a/configs/createdb.php
++++ b/configs/createdb.php
+@@ -125,6 +125,17 @@ $db->execute("INSERT INTO USER_GROUP VALUES (".ROOT_ID.", ".
+     PUBLIC_GROUP_ID.", ".ACTIVE_STATUS.", $now)");
+ $db->execute("INSERT INTO USER_GROUP VALUES (".PUBLIC_USER_ID.", ".
+     PUBLIC_GROUP_ID.", ".ACTIVE_STATUS.", $now)");
++//Create a Group for Wiki HELP.
++$sql = "INSERT INTO GROUPS VALUES(" . HELP_GROUP_ID . ",'Help','" .
++    $creation_time . "','" . ROOT_ID . "',
++    '" . PUBLIC_JOIN . "', '" . GROUP_READ .
++    "', " . NON_VOTING_GROUP . ", " . FOREVER . ")";
++$db->execute($sql);
++$now = time();
++$db->execute("INSERT INTO USER_GROUP VALUES (" . ROOT_ID . ", " .
++    HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
++$db->execute("INSERT INTO USER_GROUP VALUES (" . PUBLIC_USER_ID . ", " .
++    HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
+ $public_pages = array();
+ $public_pages["404"] = <<<EOD
+ title=Page Not Found
+@@ -537,6 +548,41 @@ foreach($public_pages as $page_name => $page_content) {
+         $page_content, "en-US", "Creating Default Pages",
+         "$page_name Wiki Page Created!", "Discuss the page in this thread!");
+ }
++//Insert Help pages
++$help_pages = getWikiHelpPages();
++foreach($help_pages as $page_name => $page_content) {
++    $page_content = str_replace("&amp;", "&", $page_content);
++    $page_content = @htmlentities($page_content, ENT_QUOTES, "UTF-8");
++    $group_model->setPageName(ROOT_ID, HELP_GROUP_ID, $page_name,
++        $page_content, "en-US", "Creating Default Pages",
++        "$page_name Help Page Created!", "Discuss the page in this thread!");
++}
++function getWikiHelpPages()
++{
++    $help_pages = array();
++    require_once(BASE_DIR . "/models/datasources/sqlite3_manager.php");
++    $default_dbm = new Sqlite3Manager();
++    $default_dbm->connect("", "", "", BASE_DIR . "/data/default_help.db");
++    if(!$default_dbm) {
++        return false;
++    }
++    $group_model = new GroupModel(DB_NAME, true);
++    $group_model->db = $default_dbm;
++    $page_list = $group_model->getPageList(HELP_GROUP_ID, "en-US", '', 0, 200);
++    foreach($page_list[1] as $page) {
++        if(isset($page['TITLE'])) {
++            $page_info = $group_model->getPageInfoByName(
++                HELP_GROUP_ID, $page['TITLE'], "en-US", "api");
++            $page_content = str_replace("&amp;", "&", $page_info['PAGE']);
++            $page_content = html_entity_decode($page_content, ENT_QUOTES,
++                "UTF-8");
++            $help_pages[$page['TITLE']] = $page_content;
++        }
++    }
++    return $help_pages;
++}
++
++/* End Help content insertion. */
+ /* we insert 1 by 1 rather than comma separate as sqlite
+    does not support comma separated inserts
+  */
+@@ -821,7 +867,5 @@ $db->disconnect();
+ if(in_array(DBMS, array('sqlite','sqlite3' ))){
+     chmod(CRAWL_DIR."/data/".DB_NAME.".db", 0666);
+ }
+-
+-
+ echo "Create DB succeeded\n";
+ ?>
+\ No newline at end of file
+diff --git a/controllers/controller.php b/controllers/controller.php
+index 9c73885..271172d 100755
+--- a/controllers/controller.php
++++ b/controllers/controller.php
+@@ -271,8 +271,8 @@ abstract class Controller
+         $data = array();
+         $data["OTHER_BACK_URL"] = "";
+         if(isset($_REQUEST['back_params'])) {
+-            foreach($_REQUEST['back_params'] as
+-                    $back_param_key => $back_param_value) {
++            foreach ($_REQUEST['back_params'] as
++                     $back_param_key => $back_param_value) {
+                 $data['BACK_PARAMS']["back_params[$back_param_key]"]
+                     = $back_param_value;
+                 $data["OTHER_BACK_URL"] .= "&amp;back_params[$back_param_key]"
+diff --git a/data/default.db b/data/default.db
+index 450ff35739b1fabc1f0b4769402cd3e8176feaad..90520040c3e598624d00d1108e059f097745108a 100644
+GIT binary patch
+literal 123904
+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
+KKKFZ8KK~C?0e&O^
+
+delta 7296
+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
+P#`9VXg!i9-*}DG%>+Q%(
+
+diff --git a/lib/upgrade_functions.php b/lib/upgrade_functions.php
+index d12175d..1e99c3c 100644
+--- a/lib/upgrade_functions.php
++++ b/lib/upgrade_functions.php
+@@ -857,21 +857,27 @@ function upgradeDatabaseVersion24(&$db)
+ }
+ /**
+  * Upgrades a Version 24 version of the Yioop! database to a Version 25 version
++ * This version upgrade includes creation of Help group that holds help pages.
++ * Help Group is created with GROUP_ID=HELP_GROUP_ID. If a Group with
++ * Group_ID=HELP_GROUP_ID already exists,
++ * then that GROUP is moved to the end of the GROUPS table(Max group id is
++ * used).
+  *
+  * @param object $db datasource to use to upgrade
+  */
+-function upgradeDatabaseVersion25(&$db) {
++function upgradeDatabaseVersion25(&$db)
++{
+     /** For reading HELP_GROUP_ID**/
+     require_once BASE_DIR . "/configs/config.php";
+     /** For GroupModel::setPageName method */
+     require_once BASE_DIR . "/models/group_model.php";
+     $db->execute("DELETE FROM VERSION WHERE ID < 24");
+     $db->execute("UPDATE VERSION SET ID=25 WHERE ID=24");
+-    $sql = "SELECT COUNT(*) AS NUM FROM GROUPS WHERE GROUP_ID=".HELP_GROUP_ID;
++    $sql = "SELECT COUNT(*) AS NUM FROM GROUPS WHERE GROUP_ID=" . HELP_GROUP_ID;
+     $result = $db->execute($sql);
+     $row = ($db->fetchArray($result));
+     $is_taken = intval($row['NUM']);
+-    if ($is_taken > 0) {
++    if($is_taken > 0) {
+         //Get the max group Id , increment it to push the old group
+         $sql = "SELECT MAX(GROUP_ID) AS MAX_GROUP_ID FROM GROUPS";
+         $result = $db->execute($sql);
+@@ -879,48 +885,62 @@ function upgradeDatabaseVersion25(&$db) {
+         $max_group_id = $row['MAX_GROUP_ID'] + 1;
+         $tables_to_update_group_id = array("GROUPS", "GROUP_ITEM", "GROUP_PAGE",
+             "GROUP_PAGE_HISTORY", "USER_GROUP");
+-        foreach ($tables_to_update_group_id as $table) {
++        foreach($tables_to_update_group_id as $table) {
+             $sql = "UPDATE $table "
+-                    . "Set GROUP_ID=$max_group_id "
+-                    . "WHERE "
+-                    . "GROUP_ID=". HELP_GROUP_ID;
++                . "Set GROUP_ID=$max_group_id "
++                . "WHERE "
++                . "GROUP_ID=" . HELP_GROUP_ID;
+             $db->execute($sql);
+         }
+     }
+     //Insert the Help Group
+     $creation_time = microTimestamp();
+-    $sql = "INSERT INTO GROUPS VALUES(" . HELP_GROUP_ID . ",'Help','" 
+-            . $creation_time . "','" . ROOT_ID . "','" . PUBLIC_JOIN . "', '" 
+-            . GROUP_READ . "', " . NON_VOTING_GROUP . ", " . FOREVER . ")";
++    $sql = "INSERT INTO GROUPS VALUES(" . HELP_GROUP_ID . ",'Help','"
++        . $creation_time . "','" . ROOT_ID . "','" . PUBLIC_JOIN . "', '"
++        . GROUP_READ . "', " . NON_VOTING_GROUP . ", " . FOREVER . ")";
+     $db->execute($sql);
+     $now = time();
+     $db->execute("INSERT INTO USER_GROUP VALUES (" . ROOT_ID . ", " .
+-            HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
++        HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
+     $db->execute("INSERT INTO USER_GROUP VALUES (" . PUBLIC_USER_ID . ", " .
+-            HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
++        HELP_GROUP_ID . ", " . ACTIVE_STATUS . ", $now)");
+     //Insert into Groups
+-    $help_pages = array();
+     $help_pages = getWikiHelpPages();
+-    foreach ($help_pages as $page_name => $page_content) {
++    foreach($help_pages as $page_name => $page_content) {
+         $page_content = str_replace("&amp;", "&", $page_content);
+         $page_content = @htmlentities($page_content, ENT_QUOTES, "UTF-8");
+         $group_model = new GroupModel(DB_NAME, false);
+         $group_model->db = $db;
+-        $group_model->setPageName(ROOT_ID, HELP_GROUP_ID, $page_name, 
+-                $page_content, "en-US", "Creating Default Pages", "$page_name "
+-                . "Help Page Created!", "Discuss the page in this thread!");
++        $group_model->setPageName(ROOT_ID, HELP_GROUP_ID, $page_name,
++            $page_content, "en-US", "Creating Default Pages", "$page_name "
++            . "Help Page Created!", "Discuss the page in this thread!");
+     }
+ }
+-
++/**
++ * Reads the Help articles from default db and returns the array of pages.
++ */
+ function getWikiHelpPages()
+ {
+     $help_pages = array();
+-    $help_pages["Help Page 1"] = <<<EOD
+-title=Help Page One
+-description=This is a test page for Wiki help insertion.
+-END_HEAD_VARS
+-==Please ignore this page.==
+-EOD;
++    require_once(BASE_DIR . "/models/datasources/sqlite3_manager.php");
++    $default_dbm = new Sqlite3Manager();
++    $default_dbm->connect("", "", "", BASE_DIR . "/data/default.db");
++    if(!$default_dbm) {
++        return false;
++    }
++    $group_model = new GroupModel(DB_NAME, true);
++    $group_model->db = $default_dbm;
++    $page_list = $group_model->getPageList(HELP_GROUP_ID, "en-US", '', 0, 200);
++    foreach($page_list[1] as $page) {
++        if(isset($page['TITLE'])) {
++            $page_info = $group_model->getPageInfoByName(
++                HELP_GROUP_ID, $page['TITLE'], "en-US", "api");
++            $page_content = str_replace("&amp;", "&", $page_info['PAGE']);
++            $page_content = html_entity_decode($page_content, ENT_QUOTES,
++                "UTF-8");
++            $help_pages[$page['TITLE']] = $page_content;
++        }
++    }
+     return $help_pages;
+ }
+ /**
+diff --git a/views/elements/managelocales_element.php b/views/elements/managelocales_element.php
+index 1621e12..941776c 100644
+--- a/views/elements/managelocales_element.php
++++ b/views/elements/managelocales_element.php
+@@ -60,7 +60,9 @@ class ManagelocalesElement extends Element
+         } else {
+             $this->renderLocaleForm($data);
+         }
+-        $data['TABLE_TITLE'] = tl('managelocales_element_locale_list');
++        $data['TABLE_TITLE'] = tl('managelocales_element_locale_list')
++            ."&nbsp;" . $this->view->helper("helpbutton")->render(
++            "Locale List", $data[CSRF_TOKEN],$_REQUEST['c']);
+         $data['NO_FLOAT_TABLE'] = true;
+         $data['ACTIVITY'] = 'manageLocales';
+         $data['VIEW'] = $this->view;
+@@ -128,10 +130,13 @@ class ManagelocalesElement extends Element
+         if($editlocale) {
+             e("<div class='float-opposite'><a href='$base_url'>".
+                 tl('manageloecales_element_add_locale_form')."</a></div>");
+-            e("<h2>".tl('managelocales_element_locale_info'). "</h2>");
++            e("<h2>".tl('managelocales_element_locale_info'). "&nbsp;");
+         } else {
+-            e("<h2>".tl('managelocales_element_add_locale'). "</h2>");
++            e("<h2>".tl('managelocales_element_add_locale'). "&nbsp;");
+         }
++        e($this->view->helper("helpbutton")->render(
++            "Add Locale", $data[CSRF_TOKEN],$_REQUEST['c']));
++        e("</h2>");
+         ?>
+         <form id="addLocaleForm" method="post" action=''>
+         <input type="hidden" name="c" value="admin" />
+diff --git a/views/elements/managemachines_element.php b/views/elements/managemachines_element.php
+index 7717fda..4644405 100644
+--- a/views/elements/managemachines_element.php
++++ b/views/elements/managemachines_element.php
+@@ -52,7 +52,10 @@ class ManagemachinesElement extends Element
+     function render($data)
+     {?>
+         <div class="current-activity">
+-        <h2><?php e(tl('managemachines_element_add_machine'))?></h2>
++        <h2><?php e(tl('managemachines_element_add_machine') . "&nbsp;");
++            e($this->view->helper("helpbutton")->render(
++                "Manage Machines", $data[CSRF_TOKEN],$_REQUEST['c']));
++            ?></h2>
+         <form id="addMachineForm" method="post" action=''>
+         <input type="hidden" name="c" value="admin" />
+         <input type="hidden" name="<?php e(CSRF_TOKEN); ?>" value="<?php
+@@ -96,7 +99,10 @@ class ManagemachinesElement extends Element
+         </table>
+         </form>
+ 
+-        <h2><?php e(tl('managemachines_element_machine_info'))?></h2>
++        <h2><?php e(tl('managemachines_element_machine_info'). "&nbsp;");
++            e($this->view->helper("helpbutton")->render(
++                "Machine Information", $data[CSRF_TOKEN],$_REQUEST['c']));
++            ?></h2>
+         <div id="machinestatus" >
+         <p class="red"><?php
+             e(tl('managemachines_element_awaiting_status'))?></p>
+diff --git a/views/helpers/helpbutton_helper.php b/views/helpers/helpbutton_helper.php
+index 07d8803..adba3c2 100644
+--- a/views/helpers/helpbutton_helper.php
++++ b/views/helpers/helpbutton_helper.php
+@@ -71,7 +71,7 @@ class HelpbuttonHelper extends Helper
+         $target_controller)
+     {
+         $is_mobile = MOBILE ? "true" : "false";
+-        $wiki_group_id = "7";
++        $wiki_group_id = HELP_GROUP_ID;
+         $api_controller = "api";
+         $api_wiki_action = "wiki";
+         $api_wiki_mode = "read";
+diff --git a/views/helpers/searchform_helper.php b/views/helpers/searchform_helper.php
+index e43f642..6459899 100644
+--- a/views/helpers/searchform_helper.php
++++ b/views/helpers/searchform_helper.php
+@@ -76,7 +76,10 @@ class SearchformHelper extends Helper
+         }
+         e("<div class='float-opposite'><a href='$old_base_url'>".
+             $return_form_name."</a></div>");
+-        e("<h2>$title</h2>");
++        e("<h2>$title" . "&nbsp;");
++        e($view->helper("helpbutton")->render(
++            "Discover Groups", $data[CSRF_TOKEN],$_REQUEST['c']));
++        e("</h2>");
+         $item_sep = (MOBILE) ? "<br />" : "</td><td>";
+         ?>
+         <form id="search-form" method="post" action='./' autocomplete="off">
+-- 
+1.9.3 (Apple Git-50)
+
+
+From 090eed9810f86ec91f91e856f948d640492ae521 Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Sat, 25 Oct 2014 12:28:57 -0700
+Subject: [PATCH 3/5] =?UTF-8?q?Bug=20fixes=20and=20refactoring.=20-=20Fixe?=
+ =?UTF-8?q?s=20issue=20with=20h2=20styles=20inside=20wiki=20html=20default?=
+ =?UTF-8?q?ing=20to=20blue=20styling.=20-=20Fixes=20an=20issue=20with=20PH?=
+ =?UTF-8?q?P=20<=3D=205.3=20incompatible=20http=5Fresponse=5Fcode,=20using?=
+ =?UTF-8?q?=20a=20abckward=20compatible=20way=20from=20now=20on.=20-=20Beh?=
+ =?UTF-8?q?avior=20of=20the=20way=20wiki=20toggle=20help=20is=20changed.?=
+ =?UTF-8?q?=20clicking=20on=20help=20will=20only=20open=20the=20help.=20th?=
+ =?UTF-8?q?is=20way,=20clicking=20on=20a=20help=20button=20will=20refresh?=
+ =?UTF-8?q?=20the=20help=20when=20another=20help=20article=20is=20already?=
+ =?UTF-8?q?=20open.Close=20is=20now=20done=20with=20a=20close=20button.=20?=
+ =?UTF-8?q?-=20Fixes=20an=20issue=20with=20help=20not=20auto-opening=20whe?=
+ =?UTF-8?q?n=20spaces=20are=20used=20in=20help=20name.=20querySelectorAll?=
+ =?UTF-8?q?=20chokes=20with=20an=20invalid=20CSS=20selector.=20-Fixes=20is?=
+ =?UTF-8?q?sue=20where=20back-button=20is=20not=20populated=20when=20the?=
+ =?UTF-8?q?=20user=20:=20uploads=20resource,=20deletes=20resource,=20goes?=
+ =?UTF-8?q?=20to=20history=20page.=20Also=20the=20default=20back=20button?=
+ =?UTF-8?q?=20on=20wiki=20history=20page=20loads=20when=20only=20the=20wik?=
+ =?UTF-8?q?i=20back=20button=20is=20not=20populated.=20-=20Remove=20last?=
+ =?UTF-8?q?=20param=20from=20help=20button=20render,=20instead=20call=20$?=
+ =?UTF-8?q?=5FREQUEST[=E2=80=98c=E2=80=99]=20directly=20in=20render=20meth?=
+ =?UTF-8?q?od.?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ controllers/controller.php                |  4 ++--
+ css/search.css                            | 29 +++++++++++++++++++++-------
+ scripts/basic.js                          |  1 -
+ views/elements/api_element.php            |  2 +-
+ views/elements/help_element.php           | 16 ++++++++++++++--
+ views/elements/managegroups_element.php   |  2 +-
+ views/elements/managelocales_element.php  |  2 +-
+ views/elements/managemachines_element.php |  4 ++--
+ views/elements/wiki_element.php           | 32 ++++++++++++++++++++++++++-----
+ views/helpers/helpbutton_helper.php       |  5 ++---
+ views/helpers/searchform_helper.php       |  2 +-
+ 11 files changed, 73 insertions(+), 26 deletions(-)
+
+diff --git a/controllers/controller.php b/controllers/controller.php
+index 271172d..ef25191 100755
+--- a/controllers/controller.php
++++ b/controllers/controller.php
+@@ -287,9 +287,9 @@ abstract class Controller
+             }
+             $data['SCRIPT'] .= "\n" .
+                 'var matches = '
+-                . 'document.querySelectorAll("[data-pagename='
++                . 'document.querySelectorAll(\'[data-pagename="'
+                 . $data['OPEN_HELP_PAGE']
+-                . ']");'
++                . '"]\');'
+                 . "matches[0].click();"
+                 . "\n";
+         }
+diff --git a/css/search.css b/css/search.css
+index 26e8ee1..8c67524 100755
+--- a/css/search.css
++++ b/css/search.css
+@@ -2842,14 +2842,14 @@ table.wikitable > caption
+ }
+ 
+ .small-margin-help-pane {
+-display: none;
+-width: 380px;
+-border: 2px solid #0094ff;
+-left: -1in;
+-top: 1in;
++    display: none;
++    width: 380px;
++    border: 2px solid #0094ff;
++    left: -1in;
++    top: 1in;
+ }
+ 
+-.help-pane h2 {
++.help-title {
+     background:#0094ff;
+     color:white;
+     padding:10px;
+@@ -2860,4 +2860,19 @@ top: 1in;
+ }
+ .wiki-resource-image{
+     max-width:100%;
+-}
+\ No newline at end of file
++}
++
++#help-close{
++    margin-top: -25px;
++    bottom: 50px;
++    cursor: pointer;
++    color: white;
++    border: 1px solid #0094ff;
++    background: #0094ff;
++    font-size: 24px;
++    font-weight: bold;
++    line-height: 1px;
++    padding: 11px 3px;
++    border-radius: 20px;
++    margin-right: -10px;
++}
+diff --git a/scripts/basic.js b/scripts/basic.js
+index 4b15a3c..0eaeffa 100755
+--- a/scripts/basic.js
++++ b/scripts/basic.js
+@@ -411,7 +411,6 @@ function displayHelpForId(help_point, is_mobile, target_controller,
+ {
+     if((elt("help-frame").style.display) === "block") {
+         toggleHelp('help-frame', is_mobile, target_controller);
+-        return;
+     }
+     var tl = eval('(' + help_point.getAttribute("data-tl") + ')');
+     getPageWithCallback("?c=" + api_controller + "&group_id=" +
+diff --git a/views/elements/api_element.php b/views/elements/api_element.php
+index f847cf3..3743aa6 100644
+--- a/views/elements/api_element.php
++++ b/views/elements/api_element.php
+@@ -101,7 +101,7 @@ class ApiElement extends Element implements CrawlConstants {
+         }
+ 
+         header("Content-Type: application/json");
+-        http_response_code($http_code);
++        header('X-PHP-Response-Code: '.$http_code, true, $http_code);
+         e(json_encode($out_array));
+         exit();
+     }
+diff --git a/views/elements/help_element.php b/views/elements/help_element.php
+index f1a32ff..d6bac13 100644
+--- a/views/elements/help_element.php
++++ b/views/elements/help_element.php
+@@ -57,8 +57,14 @@ class HelpElement extends Element {
+             if (MOBILE) { ?>
+                 <div id="mobile-help">
+                     <div id="help-frame" class="frame help-pane">
++                        <div class="float-opposite">
++                            <input id="help-close" type="button"
++                                   onclick="toggleHelp('help-frame', 'true',
++                                   '<?php e($_REQUEST['c']);?>');"
++                                   value="X" />
++                        </div>
+                         <div id="help-frame-head">
+-                            <h2 id="page_name"></h2>
++                            <h2 id="page_name" class="help-title"></h2>
+                         </div>
+ 
+                         <div id="help-frame-body" class="wordwrap">
+@@ -82,8 +88,14 @@ class HelpElement extends Element {
+                 <div id="<?php e($help_id); ?>">
+                   <div id="help-frame" class="frame help-pane <?php
+                   e($help_class_add); ?>">
++                      <div class="float-opposite">
++                          <input id="help-close" type="button"
++                                 onclick="toggleHelp('help-frame', false,
++                                     '<?php e($_REQUEST['c']);?>');"
++                                 value="X" />
++                      </div>
+                       <div id="help-frame-head">
+-                          <h2 id="page_name"></h2>
++                          <h2 id="page_name" class="help-title"></h2>
+                       </div>
+ 
+                     <div id="help-frame-body" class="wordwrap">
+diff --git a/views/elements/managegroups_element.php b/views/elements/managegroups_element.php
+index 0a55d10..e360aeb 100755
+--- a/views/elements/managegroups_element.php
++++ b/views/elements/managegroups_element.php
+@@ -324,7 +324,7 @@ class ManagegroupsElement extends Element
+                         e(tl('managegroups_element_browse')); ?></a>]
+                     <?php
+                     e($this->view->helper("helpbutton")->render(
+-                            "Main", $data[CSRF_TOKEN],$_REQUEST['c']));
++                            "Browse Groups", $data[CSRF_TOKEN]));
+                     ?></td>
+                 <?php
+                 }
+diff --git a/views/elements/managelocales_element.php b/views/elements/managelocales_element.php
+index 941776c..66cb435 100644
+--- a/views/elements/managelocales_element.php
++++ b/views/elements/managelocales_element.php
+@@ -62,7 +62,7 @@ class ManagelocalesElement extends Element
+         }
+         $data['TABLE_TITLE'] = tl('managelocales_element_locale_list')
+             ."&nbsp;" . $this->view->helper("helpbutton")->render(
+-            "Locale List", $data[CSRF_TOKEN],$_REQUEST['c']);
++            "Locale List", $data[CSRF_TOKEN]);
+         $data['NO_FLOAT_TABLE'] = true;
+         $data['ACTIVITY'] = 'manageLocales';
+         $data['VIEW'] = $this->view;
+diff --git a/views/elements/managemachines_element.php b/views/elements/managemachines_element.php
+index 4644405..6ac7e93 100644
+--- a/views/elements/managemachines_element.php
++++ b/views/elements/managemachines_element.php
+@@ -54,7 +54,7 @@ class ManagemachinesElement extends Element
+         <div class="current-activity">
+         <h2><?php e(tl('managemachines_element_add_machine') . "&nbsp;");
+             e($this->view->helper("helpbutton")->render(
+-                "Manage Machines", $data[CSRF_TOKEN],$_REQUEST['c']));
++                "Manage Machines", $data[CSRF_TOKEN]));
+             ?></h2>
+         <form id="addMachineForm" method="post" action=''>
+         <input type="hidden" name="c" value="admin" />
+@@ -101,7 +101,7 @@ class ManagemachinesElement extends Element
+ 
+         <h2><?php e(tl('managemachines_element_machine_info'). "&nbsp;");
+             e($this->view->helper("helpbutton")->render(
+-                "Machine Information", $data[CSRF_TOKEN],$_REQUEST['c']));
++                "Machine Information", $data[CSRF_TOKEN]));
+             ?></h2>
+         <div id="machinestatus" >
+         <p class="red"><?php
+diff --git a/views/elements/wiki_element.php b/views/elements/wiki_element.php
+index 82de9d5..04fdc90 100644
+--- a/views/elements/wiki_element.php
++++ b/views/elements/wiki_element.php
+@@ -268,9 +268,13 @@ class WikiElement extends Element implements CrawlConstants
+         $base_url = "?c=".$data['CONTROLLER']."&amp;a=wiki&amp;".
+             CSRF_TOKEN.'='.$data[CSRF_TOKEN]."&amp;group_id=".
+             $data['GROUP']['GROUP_ID'];
++        $append = "";
++        if(isset($data['OTHER_BACK_URL'])) {
++            $append = $data['OTHER_BACK_URL'];
++        }
+         ?>
+         <div class="float-opposite" style="position:relative; top:35px;">
+-        [<a href="<?php e($base_url); ?>&amp;<?php
++        [<a href="<?php e($base_url . $append); ?>&amp;<?php
+             e('&amp;arg=history&amp;page_id='.$data['PAGE_ID']); ?>"
+         ><?php e(tl('wiki_element_history'))?></a>]
+         [<a href="?c=<?php e($data['CONTROLLER']); ?>&amp;a=groupFeeds&amp;<?php
+@@ -432,6 +436,18 @@ class WikiElement extends Element implements CrawlConstants
+             e($data[CSRF_TOKEN]); ?>" />
+         <input type="hidden" name="a" value="wiki" />
+         <input type="hidden" name="arg" value="edit" />
++        <?php
++            if(isset($data['BACK_PARAMS'])) {
++                foreach ($data["BACK_PARAMS"] as
++                         $back_param_key => $back_param_value) {
++                    e('<input type="hidden" '
++                        . 'name="' . $back_param_key .
++                        '" value="' .
++                        $back_param_value
++                        . '" />');
++                }
++            }
++        ?>
+         <input type="hidden" name="group_id" value="<?php
+             e($data['GROUP']['GROUP_ID']); ?>" />
+         <input type="hidden" name="page_name" value="<?php
+@@ -581,9 +597,13 @@ class WikiElement extends Element implements CrawlConstants
+                             "</button></td>");
+                     }
+                     if(!$read_mode) {
++                        $append = "";
++                        if(isset($data['OTHER_BACK_URL'])) {
++                            $append .= $data['OTHER_BACK_URL'];
++                        }
+                         e("<td>[<a href='$base_url&amp;arg=edit&amp;page_name=".
+                             $data['PAGE_NAME'].
+-                            "&amp;delete=$name'>X</a>]</td>");
++                            "&amp;delete=$name$append'>X</a>]</td>");
+                     }
+                     e("</tr>");
+                 }
+@@ -671,12 +691,14 @@ class WikiElement extends Element implements CrawlConstants
+         $base_query = "?c={$data['CONTROLLER']}&amp;".CSRF_TOKEN."=".
+             $data[CSRF_TOKEN] . "&amp;group_id=".
+             $data["GROUP"]["GROUP_ID"]."&amp;a=wiki";
+-        ?>
+-        <div class="float-opposite"><a href="<?php e($base_query .
+-                    '&amp;arg=edit&amp;a=wiki&amp;page_name='.
++        //For now, Do not duplicate the back button if back url is present.
++        if(!isset($data['OTHER_BACK_URL']) || $data['OTHER_BACK_URL'] == '') {
++        ?><div class="float-opposite"><a href="<?php e($base_query .
++                    '&amp;arg=edit&amp;a=wiki&amp;page_name=' .
+                     $data['PAGE_NAME']); ?>"><?php
+             e(tl("wiki_view_back")); ?></a></div>
+         <?php
++        }
+         if(count($data['HISTORY']) > 1) { ?>
+             <div>
+             <form id="differenceForm" method="get" action='#'>
+diff --git a/views/helpers/helpbutton_helper.php b/views/helpers/helpbutton_helper.php
+index adba3c2..1aa678a 100644
+--- a/views/helpers/helpbutton_helper.php
++++ b/views/helpers/helpbutton_helper.php
+@@ -67,8 +67,7 @@ class HelpbuttonHelper extends Helper
+      * @param  $target_controller - target controller to remember the view.
+      * @return String button html.
+      */
+-    public function render($help_point_id, $csrf_token_value,
+-        $target_controller)
++    public function render($help_point_id, $csrf_token_value)
+     {
+         $is_mobile = MOBILE ? "true" : "false";
+         $wiki_group_id = HELP_GROUP_ID;
+@@ -80,7 +79,7 @@ class HelpbuttonHelper extends Helper
+                     onclick="javascript:displayHelpForId(
+                     this,'
+         . $is_mobile . ',\''
+-        . $target_controller . '\',\''
++        . $_REQUEST['c'] . '\',\''
+         . $_REQUEST['a'] . '\',\''
+         . CSRF_TOKEN . '\',\''
+         . $csrf_token_value . "','$wiki_group_id','$api_controller',"
+diff --git a/views/helpers/searchform_helper.php b/views/helpers/searchform_helper.php
+index 6459899..c0d842f 100644
+--- a/views/helpers/searchform_helper.php
++++ b/views/helpers/searchform_helper.php
+@@ -78,7 +78,7 @@ class SearchformHelper extends Helper
+             $return_form_name."</a></div>");
+         e("<h2>$title" . "&nbsp;");
+         e($view->helper("helpbutton")->render(
+-            "Discover Groups", $data[CSRF_TOKEN],$_REQUEST['c']));
++            "Discover Groups", $data[CSRF_TOKEN]));
+         e("</h2>");
+         $item_sep = (MOBILE) ? "<br />" : "</td><td>";
+         ?>
+-- 
+1.9.3 (Apple Git-50)
+
+
+From 67d3e359e6ab76e25d66626d12d4232b4fc665a2 Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Sat, 25 Oct 2014 12:57:48 -0700
+Subject: [PATCH 4/5] Fixes Issue where back button does not redirect back
+ properly when child help-edit is initiated from child pages.
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ scripts/basic.js                    | 30 +++++++++++++++++++-----------
+ views/helpers/helpbutton_helper.php | 13 +++++++++++++
+ 2 files changed, 32 insertions(+), 11 deletions(-)
+
+diff --git a/scripts/basic.js b/scripts/basic.js
+index 0eaeffa..9aa0225 100755
+--- a/scripts/basic.js
++++ b/scripts/basic.js
+@@ -413,6 +413,8 @@ function displayHelpForId(help_point, is_mobile, target_controller,
+         toggleHelp('help-frame', is_mobile, target_controller);
+     }
+     var tl = eval('(' + help_point.getAttribute("data-tl") + ')');
++    var back_params = eval('(' + help_point.getAttribute("data-back-params")
++    + ')');
+     getPageWithCallback("?c=" + api_controller + "&group_id=" +
+         help_group_id + "&" +
+         "arg=" + mode + "&" +
+@@ -437,7 +439,8 @@ function displayHelpForId(help_point, is_mobile, target_controller,
+                 csrf_token_key,
+                 csrf_token_value,
+                 help_group_id,
+-                data.page_name) + '">' +
++                data.page_name,
++                back_params) + '">' +
+             tl["wiki_view_edit"] + '</a>]';
+             toggleHelp('help-frame', is_mobile, target_controller);
+         },
+@@ -457,15 +460,20 @@ function displayHelpForId(help_point, is_mobile, target_controller,
+  * @return String the edit link
+  */
+ function getEditLink(target_controller, current_action, csrf_token_key,
+-    csrf_token_value, group_id, page_name)
++    csrf_token_value, group_id, page_name, back_params)
+ {
+-    return '?c=' + target_controller +
+-    '&' + csrf_token_key + '=' + csrf_token_value +
+-    '&group_id=' + group_id +
+-    '&arg=edit' +
+-    '&a=wiki' +
+-    '&page_name=' + page_name +
+-    '&back_params[open_help_page]=' + page_name +
+-    '&back_params[c]=' + target_controller +
+-    '&back_params[a]=' + current_action;
++    var edit_link = '?c=' + target_controller +
++        '&' + csrf_token_key + '=' + csrf_token_value +
++        '&group_id=' + group_id +
++        '&arg=edit' +
++        '&a=wiki' +
++        '&page_name=' + page_name +
++        '&back_params[open_help_page]=' + page_name +
++        '&back_params[c]=' + target_controller +
++        '&back_params[a]=' + current_action;
++    for (var key in back_params) {
++        var value = back_params[key];
++        edit_link += "&back_params[" + key + "]=" + value;
++    }
++    return edit_link;
+ }
+\ No newline at end of file
+diff --git a/views/helpers/helpbutton_helper.php b/views/helpers/helpbutton_helper.php
+index 1aa678a..cfe013a 100644
+--- a/views/helpers/helpbutton_helper.php
++++ b/views/helpers/helpbutton_helper.php
+@@ -56,6 +56,18 @@ class HelpbuttonHelper extends Helper
+             'wiki_view_edit :"' . tl('wiki_view_edit') . '",' .
+             'wiki_view_read :"' . tl('wiki_view_read') . '"' .
+             "}";
++        $this->backParams = "{";
++        $back_params_array = array_diff_key($_REQUEST, array_flip(
++            array("a", "c", CSRF_TOKEN, "open_help_page")
++        ));
++        $last_key = end(array_keys($back_params_array));
++        foreach($back_params_array as $key => $value) {
++            $this->backParams .= $key . ' : "' . $value . '"';
++            if($key != $last_key) {
++                $this->backParams .= ',';
++            }
++        }
++        $this->backParams .= "}";
+         parent::__construct();
+     }
+     /**
+@@ -76,6 +88,7 @@ class HelpbuttonHelper extends Helper
+         $api_wiki_mode = "read";
+         return '<button type="button"
+                     data-tl=\'' . $this->localizationdata . '\'
++                    data-back-params=\'' . $this->backParams . '\'
+                     onclick="javascript:displayHelpForId(
+                     this,'
+         . $is_mobile . ',\''
+-- 
+1.9.3 (Apple Git-50)
+
+
+From 7d20be91eda27914190cb36150a38a95761a5320 Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Sun, 26 Oct 2014 14:28:47 -0700
+Subject: [PATCH 5/5] Fixes an issue on PHP<=5.3 with html_entity_decode. minor
+ formatting cleanup.
+
+---
+ views/elements/api_element.php | 44 ++++++++++++++++++++++--------------------
+ 1 file changed, 23 insertions(+), 21 deletions(-)
+
+diff --git a/views/elements/api_element.php b/views/elements/api_element.php
+index 3743aa6..2d9b8d2 100644
+--- a/views/elements/api_element.php
++++ b/views/elements/api_element.php
+@@ -37,7 +37,6 @@ if (!defined('BASE_DIR')) {
+ }
+ /** Loads common constants for web crawling */
+ require_once BASE_DIR . "/lib/crawl_constants.php";
+-
+ /**
+  * Element responsible for drawing wiki pages in either admin or wiki view
+  * It is also responsible for rendering wiki history pages, and listings of
+@@ -47,8 +46,8 @@ require_once BASE_DIR . "/lib/crawl_constants.php";
+  * @package seek_quarry
+  * @subpackage element
+  */
+-class ApiElement extends Element implements CrawlConstants {
+-
++class ApiElement extends Element implements CrawlConstants
++{
+     /**
+      * Draw a wiki page for group, or, depending on $data['MODE'] a listing
+      * of all pages for a group, or the history of revisions of a given page
+@@ -57,53 +56,56 @@ class ApiElement extends Element implements CrawlConstants {
+      * @param array $data fields contain data about the page being
+      * displayeed or edited, or the list of pages being displayed.
+      */
+-    function render($data) {
++    function render($data)
++    {
+         $logged_in = isset($data["ADMIN"]) && $data["ADMIN"];
+-        $can_edit = $logged_in && isset($data["CAN_EDIT"]) && $data["CAN_EDIT"];
++        $can_edit = $logged_in && isset($data["CAN_EDIT"]) &&
++            $data["CAN_EDIT"];
+         $this->renderJsonDocument($data, $can_edit, $logged_in);
+     }
+-
+     /**
+      * Used to send a Wiki content response for reading. If the page does
+      * not exist various create/login-to-create etc messages are displayed
+      * depending of it the user is logged in. and has write permissions
+      * on the group.
++     *
+      * @param array $data fields PAGE used for page contents
+      * @param bool $can_edit whether the current user has permissions to
+      *     edit or create this page
+      * @param bool $logged_in whethe current user is logged in or not
+      */
+-    function renderJsonDocument($data, $can_edit, $logged_in) {
++    function renderJsonDocument($data, $can_edit, $logged_in)
++    {
+         $out_array = array();
+         $http_code = 0;
+-        if ($data["PAGE"]) {
++        if($data["PAGE"]) {
+             $out_array["wiki_content"] = html_entity_decode($data['PAGE'],
+-                    ENT_QUOTES);
++                ENT_QUOTES, 'UTF-8');
+             $out_array['group_id'] = $data['GROUP']['GROUP_ID'];
+             $out_array['group_name'] = $data['GROUP']['GROUP_NAME'];
+             $out_array['page_id'] = $data['PAGE_ID'];
+             $out_array['page_name'] = $data['PAGE_NAME'];
+             $http_code = 200;
+-        } else if (!$logged_in) {
+-            $out_array["logged_in"] = false;
+-            $http_code = 401;
++        } else {
++            if(!$logged_in) {
++                $out_array["logged_in"] = false;
++                $http_code = 401;
++            }
+         }
+-        if ($can_edit) {
++        if($can_edit) {
+             $out_array["can_edit"] = true;
+         }
+-
+-        if (isset($data['errors']) && count($data['errors']) > 0) {
++        if(isset($data['errors']) && count($data['errors']) > 0) {
+             $out_array['errors'] = json_encode(
+-                    array_map(
+-                            function($string) {
+-                        return html_entity_decode($string, ENT_QUOTES);
++                array_map(
++                    function ($string){
++                        return html_entity_decode($string, ENT_QUOTES,
++                            'UTF-8');
+                     }, $data['errors']));
+         }
+-
+         header("Content-Type: application/json");
+-        header('X-PHP-Response-Code: '.$http_code, true, $http_code);
++        header('X-PHP-Response-Code: ' . $http_code, true, $http_code);
+         e(json_encode($out_array));
+         exit();
+     }
+-
+ }
+-- 
+1.9.3 (Apple Git-50)
+

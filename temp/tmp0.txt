@@ -1,0 +1,30 @@
+* About to connect() to yioop.pinapala.com port 80 (#1)
+*   Trying 23.102.134.220...
+* Adding handle: conn: 0x103898800
+* Adding handle: send: 0
+* Adding handle: recv: 0
+* Curl_addHandleToPipeline: length: 1
+* - Conn 1 (0x103898800) send_pipe: 1, recv_pipe: 0
+* Connected to yioop.pinapala.com (23.102.134.220) port 80 (#1)
+> GET /?c=machine&a=statuses&time=1414711408&session=def24ec588d04442a73719073b0978fc HTTP/1.1
+Range: bytes=0-50000
+User-Agent: Mozilla/5.0 (compatible; Please Name Your robot; +http://localhost/yioop/bot.php)
+Host: yioop.pinapala.com
+Accept: */*
+Accept-Encoding: deflate, gzip
+
+< HTTP/1.1 200 OK
+< Date: Thu, 30 Oct 2014 23:23:20 GMT
+* Server Apache is not blacklisted
+< Server: Apache
+< X-FRAME-OPTIONS: DENY
+< Set-Cookie: yioopbiscuit=bpj8a8vka5vp4jc44h3abr5tu0; path=/
+< Expires: Thu, 19 Nov 1981 08:52:00 GMT
+< Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+< Pragma: no-cache
+< Vary: Accept-Encoding
+< Content-Encoding: gzip
+< Transfer-Encoding: chunked
+< Content-Type: text/html
+< 
+* Connection #1 to host yioop.pinapala.com left intact
