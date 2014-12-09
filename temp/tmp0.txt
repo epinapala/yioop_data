@@ -1,30 +1,26 @@
-* About to connect() to yioop.pinapala.com port 80 (#1)
-*   Trying 23.102.134.220...
-* Adding handle: conn: 0x100907e00
+* About to connect() to localhost port 80 (#6)
+*   Trying ::1...
+* Adding handle: conn: 0x101128600
 * Adding handle: send: 0
 * Adding handle: recv: 0
 * Curl_addHandleToPipeline: length: 1
-* - Conn 1 (0x100907e00) send_pipe: 1, recv_pipe: 0
-* Connected to yioop.pinapala.com (23.102.134.220) port 80 (#1)
-> GET /?c=machine&a=statuses&time=1414721152&session=db8f795b28b57e4a5dd9f9f6a3207836 HTTP/1.1
+* - Conn 6 (0x101128600) send_pipe: 1, recv_pipe: 0
+* Connected to localhost (::1) port 80 (#6)
+> GET /yioop/ADSDASDA/?c=machine&a=statuses&time=1417482613&session=f5aad557a651e3cdebeb641a5b53143b HTTP/1.1
 Range: bytes=0-50000
 User-Agent: Mozilla/5.0 (compatible; Please Name Your robot; +http://localhost/yioop/bot.php)
-Host: yioop.pinapala.com
+Host: localhost
 Accept: */*
 Accept-Encoding: deflate, gzip
 
-< HTTP/1.1 200 OK
-< Date: Fri, 31 Oct 2014 02:05:44 GMT
-* Server Apache is not blacklisted
-< Server: Apache
-< X-FRAME-OPTIONS: DENY
-< Set-Cookie: yioopbiscuit=nmj5o3mv6r79heurr6g5o6tns2; path=/
-< Expires: Thu, 19 Nov 1981 08:52:00 GMT
-< Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
-< Pragma: no-cache
-< Vary: Accept-Encoding
-< Content-Encoding: gzip
+< HTTP/1.1 404 Not Found
+< Date: Tue, 02 Dec 2014 01:10:13 GMT
+* Server Apache/2.4.10 (Unix) OpenSSL/1.0.1i PHP/5.5.15 mod_perl/2.0.8-dev Perl/v5.16.3 is not blacklisted
+< Server: Apache/2.4.10 (Unix) OpenSSL/1.0.1i PHP/5.5.15 mod_perl/2.0.8-dev Perl/v5.16.3
+< Vary: accept-language,accept-charset
+< Accept-Ranges: bytes
 < Transfer-Encoding: chunked
-< Content-Type: text/html
+< Content-Type: text/html; charset=utf-8
+< Content-Language: en
 < 
-* Connection #1 to host yioop.pinapala.com left intact
+* Connection #6 to host localhost left intact

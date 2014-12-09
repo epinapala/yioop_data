@@ -1,0 +1,475 @@
+From bc9fa012e6dba687f4cb1faf2dc8a5d3e769ba69 Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Sat, 22 Nov 2014 22:21:51 -0800
+Subject: [PATCH 1/2] - Making changes to "start new thread" following feedback
+ from professor.
+
+(2) Also, the title attribute tooltip Start New Thread should maybe say Start New Thread in [Name of Group]. Then when you click it the form that opens should have as its title Start New Thread in [Name of Group]. Right now the title of the form is Start New Thread.
+(3) Start New Thread seems somewhat awkwardly aligned as it appears to the right of the person's icon rather than beneath it. On the other hand, the rest of the form is beneath the icon. Try to reformat this.
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ locale/ar/configure.ini              |  4 ++--
+ locale/bn/configure.ini              |  4 ++--
+ locale/de/configure.ini              |  4 ++--
+ locale/en-US/configure.ini           |  4 ++--
+ locale/es/configure.ini              |  4 ++--
+ locale/fa/configure.ini              |  4 ++--
+ locale/fr-FR/configure.ini           |  4 ++--
+ locale/he/configure.ini              |  4 ++--
+ locale/hi/configure.ini              |  4 ++--
+ locale/in-ID/configure.ini           |  4 ++--
+ locale/it/configure.ini              |  4 ++--
+ locale/ja/configure.ini              |  4 ++--
+ locale/kn/configure.ini              |  4 ++--
+ locale/ko/configure.ini              |  4 ++--
+ locale/pl/configure.ini              |  4 ++--
+ locale/pt/configure.ini              |  4 ++--
+ locale/ru/configure.ini              |  4 ++--
+ locale/te/configure.ini              |  4 ++--
+ locale/th/configure.ini              |  4 ++--
+ locale/tr/configure.ini              |  4 ++--
+ locale/vi-VN/configure.ini           |  4 ++--
+ locale/zh-CN/configure.ini           |  4 ++--
+ views/elements/groupfeed_element.php | 16 +++++++++-------
+ 23 files changed, 53 insertions(+), 51 deletions(-)
+
+diff --git a/locale/ar/configure.ini b/locale/ar/configure.ini
+index c0b5372..f3d0013 100755
+--- a/locale/ar/configure.ini
++++ b/locale/ar/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/bn/configure.ini b/locale/bn/configure.ini
+index 5d68fe7..7b4f4b4 100755
+--- a/locale/bn/configure.ini
++++ b/locale/bn/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/de/configure.ini b/locale/de/configure.ini
+index bf72240..a8deabf 100755
+--- a/locale/de/configure.ini
++++ b/locale/de/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/en-US/configure.ini b/locale/en-US/configure.ini
+index 537c8e0..030ef0a 100755
+--- a/locale/en-US/configure.ini
++++ b/locale/en-US/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = "Add a Comment"
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = "Save"
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = "Start New Thread"
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = "Start New Thread in"
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = "Subject"
+diff --git a/locale/es/configure.ini b/locale/es/configure.ini
+index 9e6bd26..433e90a 100755
+--- a/locale/es/configure.ini
++++ b/locale/es/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/fa/configure.ini b/locale/fa/configure.ini
+index 0664666..dbee41f 100755
+--- a/locale/fa/configure.ini
++++ b/locale/fa/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/fr-FR/configure.ini b/locale/fr-FR/configure.ini
+index 2d45b21..10c3990 100755
+--- a/locale/fr-FR/configure.ini
++++ b/locale/fr-FR/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/he/configure.ini b/locale/he/configure.ini
+index ec00f14..310b11d 100755
+--- a/locale/he/configure.ini
++++ b/locale/he/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/hi/configure.ini b/locale/hi/configure.ini
+index fe72ed7..f7cecea 100755
+--- a/locale/hi/configure.ini
++++ b/locale/hi/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/in-ID/configure.ini b/locale/in-ID/configure.ini
+index f1caa76..5242be9 100755
+--- a/locale/in-ID/configure.ini
++++ b/locale/in-ID/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/it/configure.ini b/locale/it/configure.ini
+index 711d1a8..21753f9 100755
+--- a/locale/it/configure.ini
++++ b/locale/it/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/ja/configure.ini b/locale/ja/configure.ini
+index f91272c..579dab4 100755
+--- a/locale/ja/configure.ini
++++ b/locale/ja/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/kn/configure.ini b/locale/kn/configure.ini
+index cf52302..4734b3d 100755
+--- a/locale/kn/configure.ini
++++ b/locale/kn/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/ko/configure.ini b/locale/ko/configure.ini
+index 9a008e7..e332796 100755
+--- a/locale/ko/configure.ini
++++ b/locale/ko/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/pl/configure.ini b/locale/pl/configure.ini
+index 5479371..b14fffc 100755
+--- a/locale/pl/configure.ini
++++ b/locale/pl/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/pt/configure.ini b/locale/pt/configure.ini
+index 1952759..88366f0 100755
+--- a/locale/pt/configure.ini
++++ b/locale/pt/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/ru/configure.ini b/locale/ru/configure.ini
+index cbfae59..af8e6d8 100755
+--- a/locale/ru/configure.ini
++++ b/locale/ru/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/te/configure.ini b/locale/te/configure.ini
+index d7ea8a0..06782b9 100755
+--- a/locale/te/configure.ini
++++ b/locale/te/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/th/configure.ini b/locale/th/configure.ini
+index 17afd24..a55381a 100755
+--- a/locale/th/configure.ini
++++ b/locale/th/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/tr/configure.ini b/locale/tr/configure.ini
+index 179ac3a..e2b1d19 100755
+--- a/locale/tr/configure.ini
++++ b/locale/tr/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/vi-VN/configure.ini b/locale/vi-VN/configure.ini
+index 32fb70e..7fc030c 100755
+--- a/locale/vi-VN/configure.ini
++++ b/locale/vi-VN/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/locale/zh-CN/configure.ini b/locale/zh-CN/configure.ini
+index e8e33fe..8f32c8d 100755
+--- a/locale/zh-CN/configure.ini
++++ b/locale/zh-CN/configure.ini
+@@ -1996,8 +1996,8 @@ groupfeed_element_add_comment = ""
+ ; groupfeed_element.php line: 544
+ groupfeed_element_save = ""
+ ;
+-; groupfeed_element.php line: 575
+-groupfeed_element_start_thread = ""
++; groupfeed_element.php line: 576
++groupfeed_element_start_thread_in_group = ""
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = ""
+diff --git a/views/elements/groupfeed_element.php b/views/elements/groupfeed_element.php
+index 75d45df..764a353 100644
+--- a/views/elements/groupfeed_element.php
++++ b/views/elements/groupfeed_element.php
+@@ -391,9 +391,10 @@ class GroupfeedElement extends Element implements CrawlConstants
+                     ?>
+                     <a  class='gray-link' href='javascript:start_thread_form
+                     (<?php
+-                        e("{$page['ID']},".
+-                            "{$page['GROUP_ID']}"); ?>)' title='<?php
+-                        e(tl('groupfeed_element_start_thread'));?>'><img
++                        e("{$page['ID']},"."{$page['GROUP_ID']},\"".
++                        "{$page[self::SOURCE_NAME]}"); ?>")' title='<?php
++                        e(tl('groupfeed_element_start_thread_in') .
++                                " " . $page[self::SOURCE_NAME]);?>'><img
+                       class="new-thread-icon" src='resources/new_thread.png'
+                             /></a>
+                     <?php } ?>
+@@ -554,7 +555,7 @@ class GroupfeedElement extends Element implements CrawlConstants
+             }
+         }
+ 
+-        function start_thread_form(id, group_id)
++        function start_thread_form(id, group_id, group_name)
+         {
+             clearInterval(updateId);
+             tmp = '<div class="thread<?php e($clear); ?>"></div>';
+@@ -562,7 +563,8 @@ class GroupfeedElement extends Element implements CrawlConstants
+             if(start_elt != tmp) {
+                 elt(id).innerHTML =
+                     tmp +
+-                    '<form action="./<?php e($data['FRAGMENT']);
++                    '<br />'
++                    +'<form action="./<?php e($data['FRAGMENT']);
+                     ?>" >' + <?php e($hidden_form); ?>
+                     '<input type="hidden" name="c" value="<?php
+                         e($data['CONTROLLER']) ?>" />' +
+@@ -573,8 +575,8 @@ class GroupfeedElement extends Element implements CrawlConstants
+                     '<input type="hidden" name="<?php e(CSRF_TOKEN); ?>" '+
+                     'value="<?php e($data[CSRF_TOKEN]); ?>" />' +
+                     '<h2><b><?php
+-                        e(tl("groupfeed_element_start_thread"));
+-                    ?></b></h2>'+
++                        e(tl("groupfeed_element_start_thread_in"));
++                    ?> ' + group_name + '</b></h2>'+
+                     '<p><b><label for="title-'+ id +'" ><?php
+                         e(tl("groupfeed_element_subject"));
+                     ?></label></b></p>' +
+-- 
+2.1.2
+
+
+From fe57f6a98f41a6bae5f7d64881911cffe71dc4e0 Mon Sep 17 00:00:00 2001
+From: epinapala <epinapala@ebay.com>
+Date: Sun, 23 Nov 2014 14:45:19 -0800
+Subject: [PATCH 2/2] Changes to the way
+ groupfeed_element_start_thread_in_group is localized.
+
+Signed-off-by: epinapala <epinapala@ebay.com>
+---
+ locale/en-US/configure.ini           |  2 +-
+ views/elements/groupfeed_element.php | 11 +++++------
+ 2 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/locale/en-US/configure.ini b/locale/en-US/configure.ini
+index 030ef0a..f891285 100755
+--- a/locale/en-US/configure.ini
++++ b/locale/en-US/configure.ini
+@@ -1997,7 +1997,7 @@ groupfeed_element_add_comment = "Add a Comment"
+ groupfeed_element_save = "Save"
+ ;
+ ; groupfeed_element.php line: 576
+-groupfeed_element_start_thread_in_group = "Start New Thread in"
++groupfeed_element_start_thread_in_group = "Start New Thread in %s"
+ ;
+ ; groupfeed_element.php line: 578
+ groupfeed_element_subject = "Subject"
+diff --git a/views/elements/groupfeed_element.php b/views/elements/groupfeed_element.php
+index 764a353..1c4e5d0 100644
+--- a/views/elements/groupfeed_element.php
++++ b/views/elements/groupfeed_element.php
+@@ -392,9 +392,10 @@ class GroupfeedElement extends Element implements CrawlConstants
+                     <a  class='gray-link' href='javascript:start_thread_form
+                     (<?php
+                         e("{$page['ID']},"."{$page['GROUP_ID']},\"".
+-                        "{$page[self::SOURCE_NAME]}"); ?>")' title='<?php
+-                        e(tl('groupfeed_element_start_thread_in') .
+-                                " " . $page[self::SOURCE_NAME]);?>'><img
++                        tl('groupfeed_element_start_thread_in_group',
++                            $page[self::SOURCE_NAME])); ?>")' title='<?php
++                        e(tl('groupfeed_element_start_thread_in_group',
++                            $page[self::SOURCE_NAME]));?>'><img
+                       class="new-thread-icon" src='resources/new_thread.png'
+                             /></a>
+                     <?php } ?>
+@@ -574,9 +575,7 @@ class GroupfeedElement extends Element implements CrawlConstants
+                         group_id + '" />' +
+                     '<input type="hidden" name="<?php e(CSRF_TOKEN); ?>" '+
+                     'value="<?php e($data[CSRF_TOKEN]); ?>" />' +
+-                    '<h2><b><?php
+-                        e(tl("groupfeed_element_start_thread_in"));
+-                    ?> ' + group_name + '</b></h2>'+
++                    '<h2><b>' + group_name + '</b></h2>'+
+                     '<p><b><label for="title-'+ id +'" ><?php
+                         e(tl("groupfeed_element_subject"));
+                     ?></label></b></p>' +
+-- 
+2.1.2
+
